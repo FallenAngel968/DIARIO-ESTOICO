@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity, Alert, View } from 'react-native';
 
 import { Collapsible } from '@/components/Collapsible';
 import { ExternalLink } from '@/components/ExternalLink';
@@ -7,8 +7,35 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function TabTwoScreen() {
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      Alert.alert(
+        'Cerrar Sesión',
+        '¿Estás seguro de que quieres cerrar sesión?',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Cerrar Sesión',
+            style: 'destructive',
+            onPress: async () => {
+              await logout();
+            },
+          },
+        ]
+      );
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo cerrar la sesión');
+    }
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
@@ -21,8 +48,38 @@ export default function TabTwoScreen() {
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
+        <ThemedText type="title">Mi Perfil</ThemedText>
       </ThemedView>
+      
+      {/* User Info and Logout Section */}
+      <ThemedView style={styles.userSection}>
+        <ThemedText type="subtitle">Información del Usuario</ThemedText>
+        
+        <View style={styles.userInfoRow}>
+          <ThemedText style={styles.userLabel}>Nombre:</ThemedText>
+          <ThemedText>{user?.displayName || 'No disponible'}</ThemedText>
+        </View>
+        
+        <View style={styles.userInfoRow}>
+          <ThemedText style={styles.userLabel}>Email:</ThemedText>
+          <ThemedText>{user?.email || 'No disponible'}</ThemedText>
+        </View>
+        
+        <View style={styles.userInfoRow}>
+          <ThemedText style={styles.userLabel}>Proveedor:</ThemedText>
+          <ThemedText>{user?.providerData[0]?.providerId || 'No disponible'}</ThemedText>
+        </View>
+        
+        <View style={styles.userInfoRow}>
+          <ThemedText style={styles.userLabel}>Último acceso:</ThemedText>
+          <ThemedText>{user?.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleDateString('es-ES') : 'No disponible'}</ThemedText>
+        </View>
+        
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <ThemedText style={styles.logoutButtonText}>Cerrar Sesión</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+
       <ThemedText>This app includes example code to help you get started.</ThemedText>
       <Collapsible title="File-based routing">
         <ThemedText>
@@ -106,5 +163,35 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
     gap: 8,
+  },
+  userSection: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  userInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingVertical: 4,
+  },
+  userLabel: {
+    fontWeight: '600',
+    minWidth: 100,
+  },
+  logoutButton: {
+    backgroundColor: '#FF3B30',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
