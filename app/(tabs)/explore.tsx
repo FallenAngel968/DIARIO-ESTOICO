@@ -1,15 +1,295 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, TouchableOpacity, Alert, View } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useAuth } from '@/contexts/AuthContext';
+import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/hooks/useAuth';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
-export default function TabTwoScreen() {
+export default function ExploreScreen() {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    Alert.alert('Cerrar sesión', '¿Seguro que deseas cerrar sesión?', [
+      { text: 'Cancelar', onPress: () => {} },
+      {
+        text: 'Cerrar sesión',
+        onPress: async () => {
+          await logout();
+          router.replace('/login');
+        },
+        style: 'destructive',
+      },
+    ]);
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <ThemedText style={styles.headerTitle}>Explorar</ThemedText>
+          <ThemedText style={styles.headerSubtitle}>Recursos y herramientas estoicas</ThemedText>
+        </View>
+
+        {/* Recursos */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Recursos Recomendados</ThemedText>
+
+          <ResourceCard
+            icon="book-outline"
+            title="Meditaciones"
+            description="Marco Aurelio - La obra maestra del estoicismo"
+            colors={colors}
+            onPress={() => {}}
+          />
+
+          <ResourceCard
+            icon="document-text-outline"
+            title="Enchiridión"
+            description="Epicteto - Manual práctico de estoicismo"
+            colors={colors}
+            onPress={() => {}}
+          />
+
+          <ResourceCard
+            icon="quotes-outline"
+            title="Cartas"
+            description="Séneca - Reflexiones sobre la vida y la virtud"
+            colors={colors}
+            onPress={() => {}}
+          />
+        </View>
+
+        {/* Útiles */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Herramientas</ThemedText>
+
+          <ToolCard
+            icon="calculator-outline"
+            title="Dicotomía del Control"
+            description="Clasifica lo que puedes controlar"
+            color="#06B6D4"
+            colors={colors}
+            onPress={() => {}}
+          />
+
+          <ToolCard
+            icon="timer-outline"
+            title="Meditación Guiada"
+            description="Sesiones de 5-15 minutos"
+            color="#EC4899"
+            colors={colors}
+            onPress={() => {}}
+          />
+
+          <ToolCard
+            icon="trending-up-outline"
+            title="Mi Progreso"
+            description="Estadísticas de tu práctica"
+            color="#10B981"
+            colors={colors}
+            onPress={() => {}}
+          />
+        </View>
+
+        {/* About */}
+        <View style={[styles.aboutSection, { backgroundColor: colors.card }]}>
+          <ThemedText style={styles.aboutTitle}>Sobre Diario Estoico</ThemedText>
+          <ThemedText style={styles.aboutText}>
+            Una aplicación dedicada a la práctica diaria de la filosofía estoica. 
+            Inspirada en los grandes maestros: Marco Aurelio, Epicteto y Séneca.
+          </ThemedText>
+        </View>
+
+        {/* Logout */}
+        <Pressable
+          onPress={handleLogout}
+          style={({ pressed }) => [
+            styles.logoutButton,
+            {
+              backgroundColor: colors.tint,
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#fff" />
+          <ThemedText style={styles.logoutButtonText}>Cerrar sesión</ThemedText>
+        </Pressable>
+
+        <View style={styles.footer} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+interface ResourceCardProps {
+  icon: string;
+  title: string;
+  description: string;
+  colors: typeof Colors.light;
+  onPress: () => void;
+}
+
+function ResourceCard({ icon, title, description, colors, onPress }: ResourceCardProps) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: colors.card,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+      onPress={onPress}
+    >
+      <View style={[styles.iconBox, { backgroundColor: colors.tint + '20' }]}>
+        <Ionicons name={icon as any} size={24} color={colors.tint} />
+      </View>
+      <View style={styles.cardContent}>
+        <ThemedText style={styles.cardTitle}>{title}</ThemedText>
+        <ThemedText style={styles.cardDescription}>{description}</ThemedText>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={colors.tabIconDefault} />
+    </Pressable>
+  );
+}
+
+interface ToolCardProps {
+  icon: string;
+  title: string;
+  description: string;
+  color: string;
+  colors: typeof Colors.light;
+  onPress: () => void;
+}
+
+function ToolCard({ icon, title, description, color, colors, onPress }: ToolCardProps) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: colors.card,
+          borderColor: color,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+      onPress={onPress}
+    >
+      <View style={[styles.iconBox, { backgroundColor: color + '20' }]}>
+        <Ionicons name={icon as any} size={24} color={color} />
+      </View>
+      <View style={styles.cardContent}>
+        <ThemedText style={styles.cardTitle}>{title}</ThemedText>
+        <ThemedText style={styles.cardDescription}>{description}</ThemedText>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={color} />
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingBottom: 20,
+  },
+  header: {
+    marginBottom: 28,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#e5e5e5',
+    paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    fontWeight: '400',
+    opacity: 0.6,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 0.5,
+    borderColor: '#e5e5e5',
+    gap: 12,
+  },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardContent: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  cardDescription: {
+    fontSize: 12,
+    fontWeight: '400',
+    opacity: 0.6,
+  },
+  aboutSection: {
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  aboutTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  aboutText: {
+    fontSize: 13,
+    fontWeight: '400',
+    opacity: 0.7,
+    lineHeight: 19,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  logoutButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  footer: {
+    height: 20,
+  },
+});
+
+function TabTwoScreen() {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -153,7 +433,7 @@ export default function TabTwoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const settingsStyles = StyleSheet.create({
   headerImage: {
     color: '#808080',
     bottom: -90,

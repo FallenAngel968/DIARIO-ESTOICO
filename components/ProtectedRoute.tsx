@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { useRouter, useSegments } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter, useSegments } from 'expo-router';
+import React from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,13 +15,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   React.useEffect(() => {
     if (!isLoading) {
       const currentPath = segments.join('/');
-      const inLoginPage = currentPath === 'login';
+      const inAuthFlow = currentPath === 'login' || currentPath === 'register';
       
-      if (!user && !inLoginPage) {
-        // Usuario no autenticado y no está en la página de login
-        router.replace('/login');
-      } else if (user && inLoginPage) {
-        // Usuario autenticado pero está en la página de login
+      if (!user && !inAuthFlow) {
+        // Usuario no autenticado y no está en login/registro - mostrar registro
+        router.replace('/register');
+      } else if (user && inAuthFlow) {
+        // Usuario autenticado pero está en login/registro - ir a tabs
         router.replace('/(tabs)');
       }
     }
@@ -39,8 +39,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Si no hay usuario y está en una página protegida, mostrar spinner mientras redirige
   const currentPath = segments.join('/');
-  const inLoginPage = currentPath === 'login';
-  if (!user && !inLoginPage) {
+  const inAuthFlow = currentPath === 'login' || currentPath === 'register';
+  if (!user && !inAuthFlow) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />

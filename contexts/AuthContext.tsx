@@ -1,15 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  User, 
-  signOut, 
-  onAuthStateChanged
-} from 'firebase/auth';
 import { auth } from '@/config/firebase-config';
-import { 
-  signInWithGoogle as googleSignIn,
-  signInWithFacebook as facebookSignIn,
-  signInWithApple as appleSignIn
+import {
+    signInWithApple as appleSignIn,
+    signInWithFacebook as facebookSignIn,
+    signInWithGoogle as googleSignIn,
 } from '@/services/auth.service';
+import { User, onAuthStateChanged, signOut } from 'firebase/auth';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   user: User | null;
@@ -104,9 +100,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
