@@ -3,6 +3,7 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/hooks/useAuth';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
@@ -23,7 +24,8 @@ function SettingItem({ setting }: { setting: Setting }) {
   const [value, setValue] = useState(setting.value ?? false);
 
   return (
-    <View
+    <Pressable
+      onPress={setting.type === 'button' ? setting.onPress : undefined}
       style={[
         styles.settingItem,
         {
@@ -48,7 +50,7 @@ function SettingItem({ setting }: { setting: Setting }) {
       ) : (
         <Ionicons name="chevron-forward" size={20} color={colors.tabIconDefault} />
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -63,6 +65,7 @@ function SectionHeader({ title }: { title: string }) {
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const router = useRouter();
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
@@ -94,6 +97,20 @@ export default function SettingsScreen() {
             <ThemedText style={styles.profileEmail}>{user?.email}</ThemedText>
           </View>
         </View>
+
+        {/* Statistics */}
+        <SectionHeader title="Análisis" />
+        <SettingItem
+          setting={{
+            id: '0',
+            title: 'Estadísticas del diario',
+            subtitle: 'Ver tus análisis y métricas',
+            icon: 'bar-chart-outline',
+            color: '#8B5CF6',
+            type: 'button',
+            onPress: () => router.push('/diary-stats'),
+          }}
+        />
 
         {/* Preferences */}
         <SectionHeader title="Preferencias" />
