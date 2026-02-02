@@ -1,15 +1,18 @@
 // hooks/useAuth.js
+
 import {
   createUserWithEmailAndPassword,
   FacebookAuthProvider,
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
   updateProfile
 } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { auth } from '../config/firebase-config';
 
 const googleProvider = new GoogleAuthProvider();
@@ -91,20 +94,83 @@ export const useAuth = () => {
     }
   };
 
-  // Facebook Sign-In
+  // Facebook Sign-In usando OAuth Flow
   const signInWithFacebook = async () => {
     setLoading(true);
     setError(null);
     try {
-      Alert.alert('Facebook Sign-In', 'Redirigiendo a Facebook para autenticar...');
-      // En producción, necesitarás configurar Facebook OAuth correctamente
-      return { success: false, error: 'Facebook Sign-In no configurado aún' };
+      console.log('📱 Iniciando Facebook OAuth flow');
+
+      const facebookAppId = '1844602839820714';
+      const redirectUrl = 'https://diario-estoico-5225c.firebaseapp.com/__/auth/handler';
+
+      // Construir URL de Facebook OAuth
+      const facebookAuthUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${facebookAppId}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=token&scope=public_profile,email`;
+
+      // Abrir en navegador
+      const result = await WebBrowser.openAuthSessionAsync(
+        facebookAuthUrl,
+        redirectUrl
+      );
+
+      console.log('📱 Resultado de OAuth:', result.type);
+
+      if (result.type === 'cancel') {
+        const errorMsg = 'Login de Facebook cancelado';
+        setError(errorMsg);
+        setLoading(false);
+        return { success: false, error: errorMsg };
+      }
+
+      if (result.type === 'success') {
+        // Extraer token de la URL
+        const url = new URL(result.url);
+        const accessToken = url.hash.split('access_token=')[1]?.split('&')[0];
+
+        if (!accessToken) {
+          throw new Error('No se pudo obtener el token de Facebook');
+        }
+
+        console.log('🔐 Token obtenido de Facebook');
+
+        // Crear credencial de Firebase
+        const credential = FacebookAuthProvider.credential(accessToken);
+
+        // Autenticar con Firebase
+        const userCredential = await signInWithCredential(auth, credential);
+        console.log('✅ Usuario autenticado en Firebase');
+
+        // Obtener datos del usuario de Facebook
+        if (!userCredential.user.displayName) {
+          try {
+            const response = await fetch(
+              `https://graph.facebook.com/me?fields=name,email&access_token=${accessToken}`
+            );
+            const data = await response.json();
+
+            if (data.name) {
+              await updateProfile(userCredential.user, {
+                displayName: data.name,
+              });
+              console.log('👤 Perfil actualizado');
+            }
+          } catch (e) {
+            console.log('⚠️ Error actualizando perfil:', e);
+          }
+        }
+
+        setUser(userCredential.user);
+        setLoading(false);
+        return { success: true, user: userCredential.user };
+      }
+
+      throw new Error('Error desconocido en Facebook OAuth');
     } catch (error) {
       const errorMsg = error.message || 'Error con Facebook Sign-In';
+      console.error('❌ Error en Facebook:', errorMsg);
       setError(errorMsg);
-      return { success: false, error: errorMsg };
-    } finally {
       setLoading(false);
+      return { success: false, error: errorMsg };
     }
   };
 
